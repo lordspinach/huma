@@ -3,6 +3,7 @@ package humafiber
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,72 +22,76 @@ func (ctx *fiberCtx) Operation() *huma.Operation {
 	return ctx.op
 }
 
-func (c *fiberCtx) Matched() string {
-	return c.orig.Route().Path
+func (ctx *fiberCtx) Matched() string {
+	return ctx.orig.Route().Path
 }
 
-func (c *fiberCtx) Context() context.Context {
-	return c.orig.Context()
+func (ctx *fiberCtx) Context() context.Context {
+	return ctx.orig.Context()
 }
 
-func (c *fiberCtx) Method() string {
-	return c.orig.Method()
+func (ctx *fiberCtx) Method() string {
+	return ctx.orig.Method()
 }
 
 func (ctx *fiberCtx) Host() string {
 	return ctx.orig.Hostname()
 }
 
-func (c *fiberCtx) URL() url.URL {
-	u, _ := url.Parse(string(c.orig.Request().RequestURI()))
+func (ctx *fiberCtx) URL() url.URL {
+	u, _ := url.Parse(string(ctx.orig.Request().RequestURI()))
 	return *u
 }
 
-func (c *fiberCtx) Param(name string) string {
-	return c.orig.Params(name)
+func (ctx *fiberCtx) Param(name string) string {
+	return ctx.orig.Params(name)
 }
 
-func (c *fiberCtx) Query(name string) string {
-	return c.orig.Query(name)
+func (ctx *fiberCtx) Query(name string) string {
+	return ctx.orig.Query(name)
 }
 
-func (c *fiberCtx) Header(name string) string {
-	return c.orig.Get(name)
+func (ctx *fiberCtx) Header(name string) string {
+	return ctx.orig.Get(name)
 }
 
-func (c *fiberCtx) EachHeader(cb func(name, value string)) {
-	c.orig.Request().Header.VisitAll(func(k, v []byte) {
+func (ctx *fiberCtx) EachHeader(cb func(name, value string)) {
+	ctx.orig.Request().Header.VisitAll(func(k, v []byte) {
 		cb(string(k), string(v))
 	})
 }
 
-func (c *fiberCtx) BodyReader() io.Reader {
-	return c.orig.Request().BodyStream()
+func (ctx *fiberCtx) BodyReader() io.Reader {
+	return ctx.orig.Request().BodyStream()
 }
 
-func (c *fiberCtx) SetReadDeadline(deadline time.Time) error {
+func (ctx *fiberCtx) GetMultipartForm() (*multipart.Form, error) {
+	return ctx.orig.MultipartForm()
+}
+
+func (ctx *fiberCtx) SetReadDeadline(deadline time.Time) error {
 	// Note: for this to work properly you need to do two things:
 	// 1. Set the Fiber app's `StreamRequestBody` to `true`
 	// 2. Set the Fiber app's `BodyLimit` to some small value like `1`
 	// Fiber will only call the request handler for streaming once the limit is
 	// reached. This is annoying but currently how things work.
-	return c.orig.Context().Conn().SetReadDeadline(deadline)
+	return ctx.orig.Context().Conn().SetReadDeadline(deadline)
 }
 
-func (c *fiberCtx) SetStatus(code int) {
-	c.orig.Status(code)
+func (ctx *fiberCtx) SetStatus(code int) {
+	ctx.orig.Status(code)
 }
 
-func (c *fiberCtx) AppendHeader(name string, value string) {
-	c.orig.Append(name, value)
+func (ctx *fiberCtx) AppendHeader(name string, value string) {
+	ctx.orig.Append(name, value)
 }
 
-func (c *fiberCtx) SetHeader(name string, value string) {
-	c.orig.Set(name, value)
+func (ctx *fiberCtx) SetHeader(name string, value string) {
+	ctx.orig.Set(name, value)
 }
 
-func (c *fiberCtx) BodyWriter() io.Writer {
-	return c.orig
+func (ctx *fiberCtx) BodyWriter() io.Writer {
+	return ctx.orig
 }
 
 type fiberAdapter struct {

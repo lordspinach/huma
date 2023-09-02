@@ -3,6 +3,7 @@ package humagin
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,68 +18,77 @@ type ginCtx struct {
 	orig *gin.Context
 }
 
+func (ctx *ginCtx) Request() *http.Request {
+	return ctx.orig.Request
+}
+
 func (ctx *ginCtx) Operation() *huma.Operation {
 	return ctx.op
 }
 
-func (c *ginCtx) Context() context.Context {
-	return c.orig.Request.Context()
+func (ctx *ginCtx) Context() context.Context {
+	return ctx.orig.Request.Context()
 }
 
-func (c *ginCtx) Method() string {
-	return c.orig.Request.Method
+func (ctx *ginCtx) Method() string {
+	return ctx.orig.Request.Method
 }
 
 func (ctx *ginCtx) Host() string {
 	return ctx.orig.Request.Host
 }
 
-func (c *ginCtx) URL() url.URL {
-	return *c.orig.Request.URL
+func (ctx *ginCtx) URL() url.URL {
+	return *ctx.orig.Request.URL
 }
 
-func (c *ginCtx) Param(name string) string {
-	return c.orig.Param(name)
+func (ctx *ginCtx) Param(name string) string {
+	return ctx.orig.Param(name)
 }
 
-func (c *ginCtx) Query(name string) string {
-	return c.orig.Query(name)
+func (ctx *ginCtx) Query(name string) string {
+	return ctx.orig.Query(name)
 }
 
-func (c *ginCtx) Header(name string) string {
-	return c.orig.GetHeader(name)
+func (ctx *ginCtx) Header(name string) string {
+	return ctx.orig.GetHeader(name)
 }
 
-func (c *ginCtx) EachHeader(cb func(name, value string)) {
-	for name, values := range c.orig.Request.Header {
+func (ctx *ginCtx) EachHeader(cb func(name, value string)) {
+	for name, values := range ctx.orig.Request.Header {
 		for _, value := range values {
 			cb(name, value)
 		}
 	}
 }
 
-func (c *ginCtx) BodyReader() io.Reader {
-	return c.orig.Request.Body
+func (ctx *ginCtx) BodyReader() io.Reader {
+	return ctx.orig.Request.Body
+}
+
+func (ctx *ginCtx) GetMultipartForm() (*multipart.Form, error) {
+	err := ctx.orig.Request.ParseMultipartForm(8 * 1024)
+	return ctx.orig.Request.MultipartForm, err
 }
 
 func (ctx *ginCtx) SetReadDeadline(deadline time.Time) error {
 	return huma.SetReadDeadline(ctx.orig.Writer, deadline)
 }
 
-func (c *ginCtx) SetStatus(code int) {
-	c.orig.Status(code)
+func (ctx *ginCtx) SetStatus(code int) {
+	ctx.orig.Status(code)
 }
 
-func (c *ginCtx) AppendHeader(name string, value string) {
-	c.orig.Writer.Header().Add(name, value)
+func (ctx *ginCtx) AppendHeader(name string, value string) {
+	ctx.orig.Writer.Header().Add(name, value)
 }
 
-func (c *ginCtx) SetHeader(name string, value string) {
-	c.orig.Header(name, value)
+func (ctx *ginCtx) SetHeader(name string, value string) {
+	ctx.orig.Header(name, value)
 }
 
-func (c *ginCtx) BodyWriter() io.Writer {
-	return c.orig.Writer
+func (ctx *ginCtx) BodyWriter() io.Writer {
+	return ctx.orig.Writer
 }
 
 type ginAdapter struct {

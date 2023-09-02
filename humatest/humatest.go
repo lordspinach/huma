@@ -6,6 +6,7 @@ package humatest
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -79,6 +80,11 @@ func (ctx *testContext) EachHeader(cb func(name, value string)) {
 
 func (ctx *testContext) BodyReader() io.Reader {
 	return ctx.r.Body
+}
+
+func (ctx *testContext) GetMultipartForm() (*multipart.Form, error) {
+	err := ctx.r.ParseMultipartForm(8 * 1024)
+	return ctx.r.MultipartForm, err
 }
 
 func (ctx *testContext) SetReadDeadline(deadline time.Time) error {

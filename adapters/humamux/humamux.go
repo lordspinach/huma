@@ -3,6 +3,7 @@ package humagmux
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"time"
@@ -16,6 +17,10 @@ type gmuxContext struct {
 	op *huma.Operation
 	r  *http.Request
 	w  http.ResponseWriter
+}
+
+func (ctx *gmuxContext) Request() *http.Request {
+	return ctx.r
 }
 
 func (ctx *gmuxContext) Operation() *huma.Operation {
@@ -60,6 +65,11 @@ func (ctx *gmuxContext) EachHeader(cb func(name, value string)) {
 
 func (ctx *gmuxContext) BodyReader() io.Reader {
 	return ctx.r.Body
+}
+
+func (ctx *gmuxContext) GetMultipartForm() (*multipart.Form, error) {
+	err := ctx.r.ParseMultipartForm(8 * 1024)
+	return ctx.r.MultipartForm, err
 }
 
 func (ctx *gmuxContext) SetReadDeadline(deadline time.Time) error {

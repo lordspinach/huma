@@ -3,6 +3,7 @@ package humahttprouter
 import (
 	"context"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,6 +19,10 @@ type httprouterContext struct {
 	r  *http.Request
 	w  http.ResponseWriter
 	ps httprouter.Params
+}
+
+func (ctx *httprouterContext) Request() *http.Request {
+	return ctx.r
 }
 
 func (ctx *httprouterContext) Operation() *huma.Operation {
@@ -62,6 +67,11 @@ func (ctx *httprouterContext) EachHeader(cb func(name, value string)) {
 
 func (ctx *httprouterContext) BodyReader() io.Reader {
 	return ctx.r.Body
+}
+
+func (ctx *httprouterContext) GetMultipartForm() (*multipart.Form, error) {
+	err := ctx.r.ParseMultipartForm(8 * 1024)
+	return ctx.r.MultipartForm, err
 }
 
 func (ctx *httprouterContext) SetReadDeadline(deadline time.Time) error {
